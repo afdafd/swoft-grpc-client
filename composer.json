@@ -1,0 +1,29 @@
+{
+  "name": "hzwz-client/grpc-client",
+  "description": "swoft grpc custom client",
+  "type": "library",
+  "license": "MIT",
+  "keywords": [
+    "php",
+    "swoole",
+    "swoft",
+    "grpc"
+  ],
+  "authors": [
+    {
+      "name": "fengzi",
+      "email": "ffffff_name@163.com"
+    }
+  ],
+  "minimum-stability": "dev",
+  "require": {
+    "php": ">=7.0",
+    "swoft/framework": "v2.0.11",
+    "swoft/connection-pool": "v2.0.11"
+  },
+  "autoload": {
+    "psr-4": {
+      "Hzwz\\Grpc\\Client\\": "src/"
+    }
+  }
+}
