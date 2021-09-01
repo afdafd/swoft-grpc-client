@@ -37,7 +37,7 @@ class AutoLoader extends SwoftComponent
                 'class' => \Hzwz\Grpc\Client\Client::class,
             ],
 
-            'grpcClient.pool'  => [
+            'grpcClients.pool'  => [
                 'class'  => \Hzwz\Grpc\Client\Pool\Pool::class,
                 'client' => bean('grpcClients')
             ],
