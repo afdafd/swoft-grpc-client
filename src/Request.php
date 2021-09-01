@@ -10,7 +10,6 @@ class Request extends SwooleHttp2Request
 {
     private const DEFAULT_CONTENT_TYPE = 'application/grpc+proto';
 
-
     /**
      * 初始化基本的请求数据信息
      *

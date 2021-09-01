@@ -184,3 +184,9 @@ class AgentsClient extends GrpcBaseClient
 ````
 - 最后把__construct()方法里的参数换成第 [4]点里的说的类名（$className）。
 - 就好了！
+
+### 基本流程图
+![img.png](img.png)
+
+### UML图
+![img_2.png](img_2.png)
