@@ -101,14 +101,6 @@ class Client
     protected $sendCoroutineId = 0;
 
     /**
-     * 获取当前发送流id(作为ret val)的通道。
-     *
-     * @Inject()
-     * @var ChannelPool
-     */
-    protected $resultChannel;
-
-    /**
      * @var SwooleHttp2Client
      */
     protected $swooleHttp2Client;
@@ -266,7 +258,7 @@ class Client
      */
     protected function _simpleRequest(string $method, Message $argument, $deserialize, array $metadata = [], array $options = []): array
     {
-        $channel = $this->resultChannel->get();
+        $channel = new Channel(1);
         $options['headers'] = ($options['headers'] ?? []) + $metadata;
 
         $response = retry($options['retry_num'] ?? 3, function() use($method, $argument, $options, $channel) {
