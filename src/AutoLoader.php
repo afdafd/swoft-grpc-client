@@ -33,13 +33,13 @@ class AutoLoader extends SwoftComponent
     public function beans(): array
     {
         return [
-            'grpcClient'  => [
+            'grpcClients'  => [
                 'class' => \Hzwz\Grpc\Client\Client::class,
             ],
 
             'grpcClient.pool'  => [
                 'class'  => \Hzwz\Grpc\Client\Pool\Pool::class,
-                'client' => bean('grpcClient')
+                'client' => bean('grpcClients')
             ],
         ];
     }
