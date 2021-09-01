@@ -1,4 +1,4 @@
-## swoft grpc server 端
+## swoft grpc client 端
 
 ### 1. 下载组件
 ````
