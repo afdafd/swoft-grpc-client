@@ -99,7 +99,6 @@ class Connection extends AbstractConnection
             Log::error("GrpcServerLinkError:createError", [
                 'errorMsg'          => $exception->getMessage(),
                 'errorSite'         => $exception->getFile() .'|'. $exception->getLine(),
-                'errorDetails'      => $exception->getTraceAsString(),
                 'error_happen_time' => date('Y-m-d H:i:s'),
             ]);
 

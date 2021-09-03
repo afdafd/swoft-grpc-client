@@ -1,9 +1,8 @@
 <?php declare(strict_types=1);
 
-
 namespace Hzwz\Grpc\Client\Pool;
 
-use Hzwz\Grpc\Client\Client;
+
 use Hzwz\Grpc\Client\Client as GrpcClient;
 use Hzwz\Grpc\Client\Exception\GrpcClientException;
 use Swoft\Bean\Annotation\Mapping\Bean;
@@ -24,14 +23,26 @@ class CarPayCenterPool extends AbstractPool implements GrpcClientPoolInterface
     protected $clientName = 'carPayCenter';
 
     /**
+     * @var GrpcClient
+     */
+    protected $client;
+
+    /**
+     * @var int
+     */
+    protected $count = 0;
+
+    /**
      * 初始化
      *
      * @param GrpcClient $client
      * @throws ConnectionPoolException
      */
-    public function baseInit(Client $client)
+    public function baseInit(GrpcClient $client)
     {
-        $this->initCustomConfig($client);
+        $this->client = $client;
+
+        $this->initCustomConfig();
         $this->initPool();
     }
 
@@ -42,23 +53,19 @@ class CarPayCenterPool extends AbstractPool implements GrpcClientPoolInterface
      */
     public function createConnection(): ConnectionInterface
     {
-        $grpcClient = \bean('grpcClients');
-
-        if (empty($grpcClient)) {
+        if (empty($this->client)) {
             throw new GrpcClientException(sprintf('连接池(%s) 的客户端不能为空!', static::class));
         }
 
-        return $grpcClient->createConnection($this, $this->clientName);
+        return $this->client->createConnection($this, $this->clientName);
     }
 
     /**
      * 初始化自定义配置
-     *
-     * @param $client
      */
-    private function initCustomConfig($client)
+    private function initCustomConfig()
     {
-        $config = $client->getCarPayCenter();
+        $config = $this->client->getCarPayCenter();
 
         if (empty($config)) {
             return;
@@ -67,8 +74,8 @@ class CarPayCenterPool extends AbstractPool implements GrpcClientPoolInterface
         $customConfig = array();
         if (isset($config['options']) && !empty($config['options'])) {
             $customConfig = $config['options'];
-        } elseif (!empty($client->getOptions())) {
-            $customConfig = $client->getOptions();
+        } elseif (!empty($this->client->getOptions())) {
+            $customConfig = $this->client->getOptions();
         } else {
             return;
         }

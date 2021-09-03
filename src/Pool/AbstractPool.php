@@ -9,6 +9,7 @@ use Swoft\Log\Helper\CLog;
 use Swoft\Log\Helper\Log;
 use Swoole\Coroutine;
 use Swoole\Coroutine\Channel;
+use \Throwable;
 
 /**
  * Class AbstractPool
@@ -64,9 +65,25 @@ abstract class AbstractPool implements PoolInterface
     protected $init = false;
 
     /**
-     * @var Channel
+     * @var string[]
+     *
+     * @example [
+     *    'carDeviceCenter'  => channel,
+     *    'carGatewayCenter' => channel,
+     *    'carHwbCenter'     => channel,
+     *    'carPayCenter'     => channel,
+     *    'carPublicCenter'  => channel,
+     *    'carUserCenter'    => channel,
+     * ]
      */
-    protected $channel;
+    protected $channel = [
+      'carDeviceCenter'  => null,
+      'carGatewayCenter' => null,
+      'carHwbCenter'     => null,
+      'carPayCenter'     => null,
+      'carPublicCenter'  => null,
+      'carUserCenter'    => null,
+  ];
 
     /**
      * 当前连接数
@@ -100,7 +117,7 @@ abstract class AbstractPool implements PoolInterface
             $connection->release();
         }
 
-        CLog::info('Initialize ' . static::class . ' pool size=' . $this->count);
+        CLog::info('Initialize pool ' . static::class . ' pool size=' . $this->count);
     }
 
     /**
@@ -149,12 +166,12 @@ abstract class AbstractPool implements PoolInterface
     public function close(): int
     {
         $i = 0;
-        if (empty($this->channel)) {
+        if ($this->channel[$this->clientName] === null) {
             return $i;
         }
 
         for (; $i < $this->count; $i++) {
-            $connection = $this->channel->pop($this->maxCloseTime);
+            $connection = $this->channel[$this->clientName]->pop($this->maxCloseTime);
             if ($connection === false) {
                 break;
             }
@@ -182,9 +199,8 @@ abstract class AbstractPool implements PoolInterface
      */
     private function getConnectionByChannel(): ConnectionInterface
     {
-        // 如果管道不存在，创建一个新管道并将最大连接数的值作为管道的容量值
-        if ($this->channel === null) {
-            $this->channel = new Channel($this->maxActive);
+        if ($this->channel[$this->clientName] === null) {
+            $this->channel[$this->clientName] = new Channel($this->maxActive);
         }
 
         // 如果连接数小于设置的最小连接数，创建新连接
@@ -194,7 +210,7 @@ abstract class AbstractPool implements PoolInterface
 
         // 如果管道不为空，尝试抛出一个连接
         $connection = null;
-        if (!$this->channel->isEmpty()) {
+        if (!$this->channel[$this->clientName]->isEmpty()) {
             $connection = $this->popByChannel();
         }
 
@@ -210,7 +226,7 @@ abstract class AbstractPool implements PoolInterface
         }
 
         // 如果设置了最大等待连接数，且消费者数大于/等于了最大等待数，提示错误
-        $stats = $this->channel->stats();
+        $stats = $this->channel[$this->clientName]->stats();
         if ($this->maxWait > 0 && $stats['consumer_num'] >= $this->maxWait) {
             throw new ConnectionPoolException(sprintf(
                 'Channel consumer_num 已满, maxActive=%d, maxWait=%d, currentCount=%d',
@@ -222,7 +238,7 @@ abstract class AbstractPool implements PoolInterface
 
         /* @var ConnectionInterface $connection */
         //协程休眠并在所设置的 'maxWaitTime' 后恢复协程，如果为false表示等待超时
-        $connection = $this->channel->pop($this->maxWaitTime);
+        $connection = $this->channel[$this->clientName]->pop($this->maxWaitTime);
         if ($connection === false) {
             throw new ConnectionPoolException(
                 sprintf('Channel pop 超时 %fs', $this->maxWaitTime)
@@ -265,9 +281,9 @@ abstract class AbstractPool implements PoolInterface
     {
         $time = time();
 
-        while (!$this->channel->isEmpty()) {
+        while (!$this->channel[$this->clientName]->isEmpty()) {
             /* @var ConnectionInterface $connection */
-            $connection = $this->channel->pop();
+            $connection = $this->channel[$this->clientName]->pop();
             $lastTime   = $connection->getLastTime();
 
             // 判断连接的空闲时间是否大于了设置的最大空闲时间
@@ -275,9 +291,10 @@ abstract class AbstractPool implements PoolInterface
                 try {
                     $connection->close();
                 } catch (Throwable $e) {
-                    Log::error("popByChannel 关闭连接失败" . $e->getMessage(), [
+                    Log::error("popByChannelError: 关闭连接失败", [
+                        'errorMsg' => $e->getMessage(),
                         'waitCloseConnect' => $connection,
-                        'channelDetail' => $this->channel->stats(),
+                        'channelDetail' => $this->channel[$this->clientName]->stats(),
                         'closeErrorTime' => date('Y-m-d H:i:s'),
                         'settingMaxIdleTime' => $this->maxIdleTime,
                         'connectLastActiveTime' => $lastTime
@@ -301,9 +318,9 @@ abstract class AbstractPool implements PoolInterface
      */
     private function releaseToChannel(ConnectionInterface $connection): void
     {
-        $stats = $this->channel->stats();
+        $stats = $this->channel[$this->clientName]->stats();
         if ($stats['queue_num'] < $this->maxActive) {
-            $this->channel->push($connection);
+            $this->channel[$this->clientName]->push($connection);
         }
     }
 }

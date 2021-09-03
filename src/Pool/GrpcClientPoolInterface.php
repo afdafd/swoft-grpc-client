@@ -4,9 +4,9 @@
 namespace Hzwz\Grpc\Client\Pool;
 
 
-use Hzwz\Grpc\Client\Client;
+use Hzwz\Grpc\Client\Client as GrpcClient;
 
 interface GrpcClientPoolInterface
 {
-    public function baseInit(Client $client);
+    public function baseInit(GrpcClient $client);
 }

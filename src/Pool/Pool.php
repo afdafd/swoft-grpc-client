@@ -3,7 +3,7 @@
 
 namespace Hzwz\Grpc\Client\Pool;
 
-use Hzwz\Grpc\Client\Client;
+use Hzwz\Grpc\Client\Client as GrpcClient;
 use Hzwz\Grpc\Client\Exception\GrpcClientException;
 use Swoft\Bean\Annotation\Mapping\Bean;
 use Swoft\Bean\BeanFactory;
@@ -18,7 +18,7 @@ use Swoft\Log\Helper\Log;
 class Pool
 {
     /**
-     * @var Client
+     * @var GrpcClient
      */
     protected $client;
 
@@ -39,13 +39,9 @@ class Pool
      */
     public function initPools()
     {
-        $grpcClient = \bean('grpcClients');
-
         foreach($this->grpcClientPools as $pool) {
-            BeanFactory::getBean($pool)->baseInit($grpcClient);
+            BeanFactory::getBean($pool)->baseInit($this->client);
         }
-
-        unset($grpcClient);
     }
 
     /**
@@ -53,16 +49,17 @@ class Pool
      */
     public function closeConnect(EventInterface $event)
     {
+        $closePool = '';
         foreach($this->grpcClientPools as $pool) {
             $count = BeanFactory::getBean($pool)->close();
-
-            Log::info('grpcClientClose: 关闭grpc客户端连接', [
-                'closeCount'  => $count,
-                'eventName'   => $event->getName(),
-                'eventParams' => $event->getParams(),
-                'eventTarget' => $event->getTarget(),
-                'closeTime'   => date("Y-m-d H:i:s"),
-            ]);
+            $closePool .= (string)$pool .':'. $count . PHP_EOL;
         }
+
+        Log::info('grpcClientClose: 关闭grpc客户端连接', [
+          'eventName'   => $event->getName(),
+          'eventParams' => $event->getParams(),
+          'closeDetail' => $closePool,
+          'closeTime'   => date("Y-m-d H:i:s"),
+      ]);
     }
 }
