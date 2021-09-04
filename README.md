@@ -183,7 +183,37 @@ class AgentsClient extends GrpcBaseClient
 }
 ````
 - 最后把__construct()方法里的参数换成第 [4]点里的说的类名（$className）。
-- 就好了！
+
+### 关于每个接口里带的 $metadata 和 $options 两个形参。
+  - 如果需要为某些接口设置自定义的参数可以设置在$metadata和$options里。
+  - 比如 header 头的设置、接口连接重试次数和重试时间设置，可以设置到$options里。
+  - 如果重试次数和每次重试时间没有设置的话，默认重试次数是 3 次。默认重试时间是 100毫秒。
+  - 重试机制大概是：
+      - 第一次睡眠 100毫秒。 然后进行 [补偿时间间隔] 处理后得到下一次的一个范围内的随机睡眠时间
+      - 然后接着进行第二次的请求
+      - 第三次过程和上述过程一样 （这里的重试次数如果走默认的话就是三次。可以根据需要自定义）。
+  - $options里的重试次数和重试时间的两个字段为：
+     - retry_num       重试次数
+     - retry_sleep     重试时间
+- 一个简单的配置例子：
+```php
+<?php
+
+   /**
+     * 通过名称获取运营商信息
+     * @param $nickname
+     */
+    public function getCompositeUserInfo($nickname)
+    {
+        //...
+        [$res, $state, $http2Res] = $client->getCompositeUserInfo(
+          $request,
+          [] //metadata setting
+          ['retry_num' => 2, 'retry_sleep' => 200] //$options setting
+        );
+        //...
+    }
+```
 
 ### 基本流程图
 ![img.png](img.png)

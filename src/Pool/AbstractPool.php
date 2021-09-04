@@ -231,7 +231,7 @@ abstract class AbstractPool implements PoolInterface
             throw new ConnectionPoolException(sprintf(
                 'Channel consumer_num 已满, maxActive=%d, maxWait=%d, currentCount=%d',
                 $this->maxActive,
-                $this->maxWaitTime,
+                $this->maxWait,
                 $this->count
             ));
         }
