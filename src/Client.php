@@ -279,7 +279,7 @@ class Client
                     $channel->push($response);
                 });
 
-                $response = $channel->pop(self::GRPC_DEFAULT_TIMEOUT);
+                $response = $channel->pop();
                 if ($response === false || $channel->errCode === SWOOLE_CHANNEL_TIMEOUT) {
                     throw new GrpcClientException('接收Grpc服务端消息超时' .
                         $swooleHttp2Client->errMsg,
